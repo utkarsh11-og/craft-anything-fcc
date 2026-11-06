@@ -30,7 +30,11 @@ pub const MAX_TOKENS: u32 = 64_000;
 
 /// Most content blocks we track in one response.
 const MAX_BLOCKS: usize = 4096;
-
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AuthMode {
+    ApiKey,
+    Bearer,
+}
 #[derive(Debug, Clone)]
 pub struct Anthropic {
     pub base_url: String,
@@ -38,16 +42,32 @@ pub struct Anthropic {
     pub model: String,
     /// Send the server-side fallback header and body field.
     pub fallbacks: bool,
+    pub auth_mode: AuthMode,
+    pub model_view: Option<String>,
 }
 
 impl Anthropic {
     pub fn new(base_url: Option<&str>, api_key: String, model: &str) -> Self {
-        Anthropic {
-            base_url: base_url.unwrap_or(DEFAULT_BASE).trim_end_matches('/').to_string(),
-            api_key,
-            model: if model.is_empty() { DEFAULT_MODEL.to_string() } else { model.to_string() },
-            fallbacks: true,
-        }
+    Anthropic {
+        base_url: base_url.unwrap_or(DEFAULT_BASE).trim_end_matches('/').to_string(),
+        api_key,
+        model: if model.is_empty() {
+            DEFAULT_MODEL.to_string()
+        } else {
+            model.to_string()
+        },
+        fallbacks: true,
+        auth_mode: AuthMode::ApiKey,
+        model_view: None,
+    }
+}
+    pub fn new_fcc_gateway(base_url: &str,api_key: String,model: &str,model_view: String,) -> Self {
+        let mut client = Self::new(Some(base_url), api_key, model);
+        client.auth_mode = AuthMode::Bearer;
+        client.model_view = Some(model_view);
+        client.fallbacks = false;
+
+        client
     }
 
     fn url(&self, path: &str) -> String {
@@ -56,12 +76,27 @@ impl Anthropic {
     }
 
     pub fn headers(&self) -> Vec<(&'static str, String)> {
-        let mut h = vec![("x-api-key", self.api_key.clone()), ("anthropic-version", API_VERSION.to_string())];
-        if self.fallbacks {
-            h.push(("anthropic-beta", FALLBACK_BETA.to_string()));
+    let mut h = match self.auth_mode {
+        AuthMode::ApiKey => {
+            vec![("x-api-key", self.api_key.clone())]
         }
-        h
+        AuthMode::Bearer => {
+            vec![("authorization", format!("Bearer {}", self.api_key))]
+        }
+    };
+
+    h.push(("anthropic-version", API_VERSION.to_string()));
+
+    if let Some(model_view) = &self.model_view {
+        h.push(("x-fcc-model-view", model_view.clone()));
     }
+
+    if self.fallbacks {
+        h.push(("anthropic-beta", FALLBACK_BETA.to_string()));
+    }
+
+    h
+}
 
     /// The request body for one streamed turn.
     pub fn body(&self, req: &TurnRequest<'_>) -> Value {

@@ -1,6 +1,6 @@
-# Security
+﻿# craft_anythingXFCC Security
 
-Craft Anything reads hostile files and runs other programs, so we take reports seriously.
+craft_anythingXFCC reads hostile files and runs other programs, so we take reports seriously.
 
 ## Reporting a vulnerability
 

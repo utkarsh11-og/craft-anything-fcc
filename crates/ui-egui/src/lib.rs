@@ -1,4 +1,4 @@
-//! The Craft Anything egui interface: Simple mode (make something from a prompt, or ask about a
+//! The craft_anythingXFCC egui interface: Simple mode (make something from a prompt, or ask about a
 //! target) and Advanced mode (the full workbench). Both drive the same engine.
 //!
 //! Threading: the UI thread never waits. Engine tools, AI detection, file dialogs and file writes
@@ -42,7 +42,9 @@ pub mod usage;
 pub mod widgets;
 pub mod workbench;
 
-use craft_anything_ai::{AgentEvent, AiHub, BackendConfig, Conversation, Detected};
+use craft_anything_ai::{
+    AgentEvent, AiHub, BackendConfig, BackendEntry, Conversation, Detected,
+};
 use craft_anything_engine::evidence::{ErrorCode, Evidence, ToolError, Unknown};
 use craft_anything_engine::{CallOptions, Caller, Consent, Engine, Mode, Settings, TargetKind, ToolOutput, clean_room};
 use serde::{Deserialize, Serialize};
@@ -52,6 +54,7 @@ use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use theme::ThemeKind;
+
 
 pub use i18n::tr;
 
@@ -276,7 +279,27 @@ pub struct ServerForm {
     pub model: String,
     pub key: String,
 }
+/// FCC Gateway configuration form.
+#[derive(Debug, Clone)]
+pub struct FccGatewayForm {
+    pub name: String,
+    pub address: String,
+    pub model_view: String,
+    pub model: String,
+    pub key: String,
+}
 
+impl Default for FccGatewayForm {
+    fn default() -> Self {
+        Self {
+            name: "FCC Gateway".to_string(),
+            address: "http://127.0.0.1:8082".to_string(),
+            model_view: "claude-desktop".to_string(),
+            model: "claude-fable-5".to_string(),
+            key: String::new(),
+        }
+    }
+}
 /// What a file dialog was for.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Pick {
@@ -451,6 +474,8 @@ pub struct CraftApp {
     /// Settings → AI's "Add an AI by its address" form. Not kept with the UI state: its key goes
     /// only to the keychain.
     pub server_form: ServerForm,
+    /// Settings → AI's FCC Gateway configuration form.
+    pub fcc_gateway_form: FccGatewayForm,
     /// Every project's rebuild in this window: working, waiting their turn, or finished.
     pub runs: craft_anything_ai::rebuild::RunSet,
     /// What was typed for each note still waiting for a builder, by note id, to put back in the
@@ -564,6 +589,7 @@ impl CraftApp {
             log: Vec::new(),
             key_inputs: Default::default(),
             server_form: ServerForm::default(),
+            fcc_gateway_form: FccGatewayForm::default(),
             runs: craft_anything_ai::rebuild::RunSet::new(craft_anything_engine::settings::BuildSettings::default().parallel),
             drafts: Default::default(),
             pending_paste: None,
@@ -1194,6 +1220,18 @@ impl CraftApp {
             Ok(Done::BackendAdded { name, result, choices })
         });
     }
+    pub fn add_backend_entry(&mut self, entry: BackendEntry, key: Option<String>) {
+    let hub = self.hub.clone();
+    let name = entry.config.name.clone();
+    self.jobs.spawn(
+        i18n::trf("Connect {name}", &[("name", &name)]),
+        true,
+        move |_| {
+            let result = hub.add_backend_with(entry, key);
+            Ok(Done::BackendAdded { name, result })
+        },
+    );
+}
 
     pub fn choose_backend(&mut self, name: Option<String>) {
         self.backend_choices = self.backend_choices.wrapping_add(1);
@@ -1339,7 +1377,7 @@ impl CraftApp {
         if self.headless {
             return;
         }
-        let name = self.view.active_target().map(|t| format!("{} report.md", t.name)).unwrap_or_else(|| "Craft Anything report.md".into());
+        let name = self.view.active_target().map(|t| format!("{} report.md", t.name)).unwrap_or_else(|| "craft_anythingXFCC report.md".into());
         let engine = self.engine.clone();
         #[cfg(not(target_arch = "wasm32"))]
         self.jobs.spawn("Export report", true, move |_| {
@@ -1530,6 +1568,9 @@ impl CraftApp {
                 Ok(()) => {
                     if self.server_form.name.trim() == name {
                         self.server_form = ServerForm::default();
+                    }
+                    if self.fcc_gateway_form.name.trim() == name {
+                        self.fcc_gateway_form = FccGatewayForm::default();
                     }
                     self.toast(i18n::trf("{name} is ready", &[("name", &name)]), false);
                     // Picking another AI (or none) while this one connected wins.
@@ -1871,9 +1912,9 @@ impl CraftApp {
 }
 
 /// The 256 px app icon.
-pub static APP_ICON_PNG: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/ai.storyteller.craft-anything.png");
+pub static APP_ICON_PNG: &[u8] = include_bytes!("../../../branding/generated/xfcc-256.png");
 /// The app icon's master SVG, drawn at the exact pixel size wherever the app shows its icon.
-pub static APP_ICON_SVG: &[u8] = include_bytes!("../../../assets/app-icon/craft-anything.svg");
+pub static APP_ICON_SVG: &[u8] = include_bytes!("../../../branding/generated/craft-anything-xfcc.svg");
 
 /// The app icon at `size` points.
 pub fn app_icon(size: f32) -> egui::Image<'static> {

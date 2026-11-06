@@ -76,6 +76,9 @@ pub struct BackendOptions {
     /// Anthropic server-side fallbacks (default on).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub fallbacks_enabled: Option<bool>,
+    /// FCC Gateway model visibility (e.g. `claude-desktop`).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub fcc_model_view: Option<String>,
     /// Force the ReAct text protocol (models without tool calling).
     #[serde(skip_serializing_if = "Option::is_none")]
     pub react_fallback: Option<bool>,
@@ -189,7 +192,6 @@ impl CliReasoningEffort {
         }
     }
 }
-
 /// One configured backend.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct BackendEntry {

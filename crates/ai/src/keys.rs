@@ -46,6 +46,7 @@ pub fn fal_key(store: &KeyStore) -> Option<String> {
 pub fn env_var(kind: BackendKind) -> Option<&'static str> {
     match kind {
         BackendKind::Anthropic => Some("ANTHROPIC_API_KEY"),
+	BackendKind::FccGateway => None,
         BackendKind::Openai => Some("OPENAI_API_KEY"),
         BackendKind::Openrouter => Some("OPENROUTER_API_KEY"),
         BackendKind::Gemini => Some("GEMINI_API_KEY"),

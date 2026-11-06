@@ -27,7 +27,7 @@ pub fn show(app: &mut CraftApp, ui: &mut Ui) {
         });
         ui.add_space(12.0);
     });
-    // Where you are, the ArtCraft way: "02 / 04  AI", plus a progress hairline.
+    // Show the current setup step and a progress indicator.
     let step = app.state.first_run.index();
     let y = full.bottom() - 34.0;
     let names = ["Welcome", "AI", "Purpose", "Ready"];
@@ -58,7 +58,7 @@ fn welcome(app: &mut CraftApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     ui.add(crate::app_icon(132.0));
     ui.add_space(20.0);
-    ui.label(theme::heading(tr("Craft Anything"), theme::TITLE));
+    ui.label(theme::heading(tr("craft_anythingXFCC"), theme::TITLE));
     ui.add_space(6.0);
     ui.label(RichText::new(tr("Find out how any software works, then craft your own.")).size(theme::LEAD).color(t.text_dim));
     ui.add_space(36.0);
@@ -182,6 +182,7 @@ fn kind_icon(k: BackendKind) -> &'static str {
     match k {
         BackendKind::Anthropic | BackendKind::Openai | BackendKind::Openrouter | BackendKind::Gemini => "key-round",
         BackendKind::OpenaiCompatible => "server",
+        BackendKind::FccGateway => "cloud",
         BackendKind::AgentCli => "terminal",
     }
 }

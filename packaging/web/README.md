@@ -1,6 +1,6 @@
-# Hosting Craft Anything for the web
+# Hosting craft_anythingXFCC for the web
 
-`craft-anything-web-<version>.zip` (from the GitHub release, or `packaging/web/package.sh`) holds a
+`craft-anything-web-<version>.zip` (from this fork's GitHub release, or `packaging/web/package.sh`) holds a
 static site in `craft-anything-web-<version>/`:
 
 | File | What it is |
@@ -14,7 +14,7 @@ There is no server-side code and no hand-written JavaScript: the glue is generat
 wasm-bindgen from the Rust sources (`apps/craft-anything-web`). Upload the folder's contents anywhere
 that serves static files.
 
-The web viewer runs entirely on the visitor's device: a dropped or picked file is read in the
+The craft_anythingXFCC web viewer runs entirely on the visitor's device: a dropped or picked file is read in the
 browser and never uploaded. It uses the built-in, pure-Rust analyzers only (formats, disassembly,
 JavaScript bundles); running programs, external engines and AI backends need the desktop app. A
 browser with WebGPU or WebGL2 is required.
@@ -37,7 +37,7 @@ refuses.
   `.js` files, and `no-cache` on `index.html`.
 - **HTTPS:** WebGPU (and the clipboard) only work in a secure context, which means `https://`
   or `http://localhost`. Over plain HTTP elsewhere, the app falls back to WebGL2.
-- **No special isolation headers:** Craft Anything doesn't use `SharedArrayBuffer`, so it doesn't
+- **No special isolation headers:** craft_anythingXFCC doesn't use `SharedArrayBuffer`, so it doesn't
   need `Cross-Origin-Opener-Policy` or `Cross-Origin-Embedder-Policy`. If your site already sends
   COEP `require-corp`, also send `Cross-Origin-Resource-Policy: same-origin` (or `cross-origin`
   when the files live on a CDN) on the app's files.
@@ -49,8 +49,8 @@ location /craft-anything/ {
     types { application/wasm wasm; text/javascript js; text/html html; }
     gzip on;
     gzip_types application/wasm text/javascript text/html;
-    location ~* \.(wasm|js)$ { add_header Cache-Control "public, max-age=31536000, immutable"; }
-    location ~* index\.html$ { add_header Cache-Control "no-cache"; }
+    location ~* \\.(wasm|js)$ { add_header Cache-Control "public, max-age=31536000, immutable"; }
+    location ~* index\\.html$ { add_header Cache-Control "no-cache"; }
 }
 ```
 
@@ -61,7 +61,7 @@ Local test: `python3 -m http.server 8767` inside the folder, then open http://lo
 ```html
 <iframe
   src="https://example.com/craft-anything/"
-  title="Craft Anything"
+  title="craft_anythingXFCC"
   style="width: 100%; height: 720px; border: 0;"
   allow="fullscreen; clipboard-read; clipboard-write"
   allowfullscreen>
@@ -76,14 +76,14 @@ Local test: `python3 -m http.server 8767` inside the folder, then open http://lo
 
 ## Renderer
 
-Craft Anything renders with wgpu: **WebGPU** when the browser has it, otherwise **WebGL2**.
+craft_anythingXFCC renders with wgpu: **WebGPU** when the browser has it, otherwise **WebGL2**.
 
 ## Smoke test (headless Chrome)
 
 Headless Chrome has no WebGPU adapter, so it runs on WebGL2 through SwiftShader:
 
 ```sh
-"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \
-  --use-angle=swiftshader --enable-unsafe-swiftshader --window-size=1440,900 \
-  --timeout=30000 --screenshot=craft-anything-web.png "http://127.0.0.1:8767/"
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new \\
+  --use-angle=swiftshader --enable-unsafe-swiftshader --window-size=1440,900 \\
+  --timeout=30000 --screenshot=craft_anythingXFCC-web.png "http://127.0.0.1:8767/"
 ```

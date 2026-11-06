@@ -1,13 +1,13 @@
 [Desktop Entry]
 Type=Application
-Name=Craft Anything
-GenericName=Software Explorer
-Comment=Find out how any software works, then craft your own
+Name=craft_anythingXFCC
+GenericName=AI Application Builder
+Comment=Build applications with AI and multiple model providers
 Exec=craft-anything %F
 TryExec=craft-anything
 Icon=ai.storyteller.craft-anything
 Terminal=false
 StartupNotify=true
-StartupWMClass=ai.storyteller.craft-anything
+StartupWMClass=io.github.utkarsh11-og.craftanythingxfcc
 Categories=Development;Debugger;
-Keywords=reverse engineering;disassembler;binary;analysis;executable;decompiler;inspect;
+Keywords=AI;application builder;coding;development;

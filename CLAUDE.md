@@ -1,4 +1,4 @@
-# Craft Anything
+# craft_anythingXFCC
 
 The rules below are loaded into every session (imports). They are mandatory for every change: follow them
 without being asked, unless the person explicitly says otherwise for a specific task.

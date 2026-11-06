@@ -338,7 +338,7 @@ impl ClaudeCode {
 
 impl AgentAdapter for ClaudeCode {
     fn ids(&self) -> &'static [&'static str] {
-        &["claude-code", "claude"]
+        &["claude-code", "claude", "fcc-claude"]
     }
 
     fn answers_questions(&self) -> bool {

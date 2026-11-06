@@ -1,4 +1,4 @@
-//! Windows only: embed the app icon and version info (VERSIONINFO) into `craft-anything.exe`.
+﻿//! Windows only: embed the app icon and version info (VERSIONINFO) into `craft-anything.exe`.
 //!
 //! On every other target this does nothing. A missing resource compiler is a warning, so a
 //! cross-compile from macOS or Linux still links, unless `CRAFT_ANYTHING_REQUIRE_WINRES=1` (set by
@@ -13,8 +13,8 @@ fn main() {
     }
     let mut res = winresource::WindowsResource::new();
     res.set_icon("../../assets/app-icon/craft-anything.ico")
-        .set("ProductName", "Craft Anything")
-        .set("FileDescription", "Craft Anything: find out how any software works")
+        .set("ProductName", "craft_anythingXFCC")
+        .set("FileDescription", "craft_anythingXFCC: AI-powered application builder")
         .set("LegalCopyright", "Copyright (c) the ArtCraft Team and the Craft Anything contributors. MIT OR Apache-2.0.")
         .set("OriginalFilename", "craft-anything.exe")
         .set("InternalName", "craft-anything");

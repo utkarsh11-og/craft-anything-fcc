@@ -1,4 +1,4 @@
-# Flatpak manifest for the single-file bundle attached to every GitHub release
+# Flatpak manifest for the craft_anythingXFCC single-file release bundle
 # (craft-anything-<version>-linux-<arch>.flatpak). Build it with packaging/linux/flatpak-bundle.sh.
 #
 # It repackages the release's own Linux tarball (craft-anything-<version>-linux-<arch>.tar.gz,

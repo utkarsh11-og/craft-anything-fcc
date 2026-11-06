@@ -1,10 +1,11 @@
-Craft Anything app icon (craft-anything.svg and every file derived from it in this
-directory: craft-anything-1024.png, craft-anything.icns, craft-anything.ico and
-hicolor/).
+XFCC app icon artwork
 
-This is the raven, the Crafting Apps' shared icon, made by the ArtCraft team. It is NOT covered
-by Craft Anything's MIT OR Apache-2.0 license. It is used on the same terms as the ArtCraft
-brand assets in docs/brand/LICENSE-brand.txt, which also say what forks and modified versions
-must do: replace it with their own icon.
+The app icon artwork in this directory is the XFCC replacement artwork created for this
+project. It replaces the original Craft Anything raven icon and is not an ArtCraft asset.
 
-trace.py is a tool, covered by the repository's MIT OR Apache-2.0 license.
+The artwork is project-specific. The repository's MIT OR Apache-2.0 licence applies to the
+surrounding project code and does not by itself establish a separate licence for this artwork.
+Do not treat the original Craft Anything raven icon or ArtCraft brand assets as part of this
+replacement artwork.
+
+`trace.py` is a tool covered by the repository's MIT OR Apache-2.0 licence.

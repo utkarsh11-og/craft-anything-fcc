@@ -1,7 +1,7 @@
 # Attribution
 
-Third-party material bundled with Craft Anything, file by file. Rust crates are pulled from
-crates.io under their own licences (see `Cargo.lock`) and are not listed here.
+Third-party material bundled with `craft_anythingXFCC`, file by file. Rust crates are pulled
+from crates.io under their own licences (see `Cargo.lock`) and are not listed here.
 
 ## Fonts (`assets/fonts/`)
 
@@ -18,8 +18,8 @@ not used for modified versions.
 ## egui default fonts (`epaint_default_fonts` crate)
 
 egui embeds these fonts through the `epaint_default_fonts` crate (crate licence:
-`(MIT OR Apache-2.0) AND OFL-1.1 AND Ubuntu-font-1.0`). They are embedded unmodified; the licence
-texts are in the crate's `fonts/` folder.
+`(MIT OR Apache-2.0) AND OFL-1.1 AND Ubuntu-font-1.0`). They are embedded unmodified; the
+licence texts are in the crate's `fonts/` folder.
 
 | File | Font | Copyright | Licence |
 |---|---|---|---|
@@ -36,13 +36,19 @@ texts are in the crate's `fonts/` folder.
 
 ## App icon (`assets/app-icon/`)
 
-The raven, the Crafting Apps' shared icon, made by the ArtCraft team; not open source, used on the
-brand terms below. See `assets/app-icon/LICENSE.txt`.
+The app icon artwork in this directory is the XFCC replacement artwork created for this project.
+It replaces the original Craft Anything raven icon and is not an ArtCraft asset. The icon artwork
+is project-specific; the repository's MIT OR Apache-2.0 licence applies to the surrounding
+project code and does not by itself establish a separate licence for this artwork.
 
-## Brand (`docs/brand/`)
+`trace.py` is a tool covered by the repository's MIT OR Apache-2.0 licence.
 
-The ArtCraft name, wordmark and logos are trademarks of the ArtCraft Team and are not covered by
-the open-source licence; see `docs/brand/LICENSE-brand.txt`.
+## Upstream brand notice
+
+`docs/brand/LICENSE-brand.txt` is retained as an upstream notice concerning the ArtCraft name
+and marks. The ArtCraft name, wordmark, and logos are not used as the identity of this modified
+project. This project is an independent modified fork and is not affiliated with or endorsed by
+the ArtCraft Team.
 
 ## Optional build-time fonts
 

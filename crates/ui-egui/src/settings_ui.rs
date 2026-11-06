@@ -5,7 +5,8 @@ use crate::i18n::{LANGUAGES, tr, trf};
 use crate::state::SettingsTab;
 use crate::theme::{self, ThemeKind, Tokens};
 use crate::{CraftApp, Pick, icons, widgets};
-use craft_anything_ai::BackendKind;
+use craft_anything_ai::{BackendEntry,BackendConfig, BackendKind,BackendOptions};
+
 use craft_anything_engine::Mode;
 use egui::{RichText, Ui, Vec2};
 use std::path::PathBuf;
@@ -260,7 +261,7 @@ fn engines(app: &mut CraftApp, ui: &mut Ui) {
         },
     );
     ui.add_space(12.0);
-    row(ui, "Ghidra", "Adds its decompiler to Deep mode. Craft Anything can download and set it up for you.", |ui| {
+    row(ui, "Ghidra", "Adds its decompiler to Deep mode. craft_anythingXFCC can download and set it up for you.", |ui| {
         crate::engine_ui::ghidra_status(app, ui);
     });
     row(
@@ -271,7 +272,7 @@ fn engines(app: &mut CraftApp, ui: &mut Ui) {
     );
     ui.label(RichText::new(crate::engine_ui::ghidra_memory_guide()).color(t.text_faint).size(theme::CAPTION));
     ui.add_space(8.0);
-    row(ui, "Ghidra folder", "Leave empty to use the one Craft Anything sets up.", |ui| {
+    row(ui, "Ghidra folder", "Leave empty to use the one craft_anythingXFCC sets up.", |ui| {
         if path_field(ui, &mut app.settings.engines.ghidra.install_dir, "Ghidra folder", "managed") {
             app.settings_changed();
         }
@@ -742,8 +743,106 @@ fn ai(app: &mut CraftApp, ui: &mut Ui) {
         ui.add_space(6.0);
     }
     server_form(app, ui);
+    fcc_gateway_form(app,ui);
 }
+/// Add a FreeClaudeCode gateway using its Anthropic-compatible API.
+fn fcc_gateway_form(app: &mut CraftApp, ui: &mut Ui) {
+    let t = Tokens::get(ui.ctx());
 
+    ui.add_space(14.0);
+    widgets::caption(ui, "Add an FCC Gateway");
+    ui.label(
+        RichText::new(tr("Connect to a FreeClaudeCode gateway using its Anthropic-compatible API."))
+            .color(t.text_faint)
+            .size(theme::CAPTION),
+    );
+    ui.add_space(4.0);
+
+    let form = &mut app.fcc_gateway_form;
+
+    let field = |ui: &mut Ui,
+                 text: &mut String,
+                 hint: &str,
+                 width: f32,
+                 name: &str,
+                 secret: bool| {
+        let r = ui.add(
+            egui::TextEdit::singleline(text)
+                .password(secret)
+                .hint_text(tr(hint))
+                .desired_width(width)
+                .frame(widgets::text_field_frame_compact(&t)),
+        );
+        widgets::named(r, &tr(name));
+    };
+
+    ui.horizontal(|ui| {
+        field(ui, &mut form.name, "Gateway name", 150.0, "AI name", false);
+        field(
+            ui,
+            &mut form.address,
+            "http://127.0.0.1:8082",
+            ui.available_width() - 18.0,
+            "Gateway address",
+            false,
+        );
+    });
+
+    ui.horizontal(|ui| {
+        field(ui, &mut form.model, "claude-fable-5", 220.0, "Model ID", false);
+        field(
+            ui,
+            &mut form.model_view,
+            "claude-desktop",
+            (ui.available_width() - 18.0).max(120.0),
+            "Model view",
+            false,
+        );
+    });
+
+    let address = form.address.trim();
+    let ready = !form.name.trim().is_empty()
+        && (address.starts_with("http://") || address.starts_with("https://"))
+        && !form.model.trim().is_empty()
+        && !form.model_view.trim().is_empty()
+        && !form.key.trim().is_empty();
+
+    let mut add = false;
+
+    ui.horizontal(|ui| {
+        field(
+            ui,
+            &mut form.key,
+            "FCC Gateway API key",
+            (ui.available_width() - 110.0).max(120.0),
+            "Gateway API key",
+            true,
+        );
+
+        add = widgets::primary_icon(ui, Some("plus"), "Connect", ready).clicked() && ready;
+    });
+
+    if add {
+        let entry = BackendEntry {
+            config: BackendConfig {
+                name: form.name.trim().to_string(),
+                kind: BackendKind::FccGateway,
+                model: form.model.trim().to_string(),
+                base_url: Some(address.trim_end_matches('/').to_string()),
+                ssh_host: None,
+                enabled: true,
+            },
+            options: BackendOptions {
+                fcc_model_view: Some(form.model_view.trim().to_string()),
+                ..BackendOptions::default()
+            },
+        };
+
+        let key = form.key.trim().to_string();
+
+        app.add_backend_entry(entry, Some(key));
+    }
+}
 /// An AI that "Look for AI" can't find: a server on another computer or a hosted service, added by
 /// its address (#54, #98). The server is asked for its models before it's added.
 /// The first run's AI step shows it too.
@@ -847,7 +946,7 @@ fn plugins(app: &mut CraftApp, ui: &mut Ui) {
     ui.add(
         egui::Label::new(
             RichText::new(tr(
-                "Plugins add tools Craft Anything offers as its own: MCP servers (a command or an address; read their tools after adding) or WebAssembly components (a .wasm file, which can't touch your files or the network).",
+                "Plugins add tools craft_anythingXFCC offers as its own: MCP servers (a command or an address; read their tools after adding) or WebAssembly components (a .wasm file, which can't touch your files or the network).",
             ))
             .color(t.text_faint)
             .size(theme::CAPTION),

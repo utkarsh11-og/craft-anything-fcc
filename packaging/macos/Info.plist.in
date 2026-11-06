@@ -7,13 +7,13 @@
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
   <key>CFBundleDisplayName</key>
-  <string>Craft Anything</string>
+  <string>craft_anythingXFCC</string>
   <key>CFBundleName</key>
-  <string>Craft Anything</string>
+  <string>craft_anythingXFCC</string>
   <key>CFBundleExecutable</key>
   <string>craft-anything</string>
   <key>CFBundleIdentifier</key>
-  <string>ai.storyteller.craft-anything</string>
+  <string>io.github.utkarsh11-og.craftanythingxfcc</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundlePackageType</key>
@@ -43,7 +43,6 @@
   <key>NSRequiresAquaSystemAppearance</key>
   <false/>
   <key>NSHumanReadableCopyright</key>
-  <string>Copyright © the ArtCraft Team and the Craft Anything contributors. MIT OR Apache-2.0.</string>
-
+  <string>Copyright (c) 2026 craft_anythingXFCC contributors. Includes portions copyright (c) ArtCraft Team and upstream Craft Anything contributors. MIT OR Apache-2.0.</string>
 </dict>
 </plist>

@@ -1,9 +1,9 @@
 # AGENTS.md: guide for AI agents and contributors
 
-Craft Anything is a native, pure-Rust app that shows anyone how a piece of software works (programs, apps, files,
+craft_anythingXFCC is a native, pure-Rust app that shows anyone how a piece of software works (programs, apps, files,
 websites, phones) with evidence-backed answers, then helps them rebuild it. It ships a desktop app (egui), a CLI and
-an MCP server, all driven by one engine. Display name **Craft Anything**; machine names `craft-anything-*`; bundle id
-`ai.storyteller.craft-anything`. Standards shared across the Crafting Apps live in `../craftrules` (read its
+an MCP server, all driven by one engine. Display name **craft_anythingXFCC**; machine names `craft-anything-*` (retained for compatibility); bundle id
+`ai.storyteller.craft-anything`. Shared engineering standards, when the sibling `../craftrules` repository is present, live there (read its
 `AGENTS.md`); follow them. Repos never share code.
 
 **Original work only:** never copy code, scripts, schemas, names, assets or wording from another project, and
@@ -57,7 +57,7 @@ Layering is enforced by `cargo xtask layers`. Register new crates in `xtask/src/
 8. **No secrets, no personal data** in requests, logs, tests or the repo (it is public): no API keys, tokens,
    private keys, `.env` files or local paths, only obvious fakes like `sk-test`. `cargo xtask secrets` checks what
    git would commit (`--history` checks every commit); enable the hook once per clone with
-   `git config core.hooksPath .githooks`. Generic `CraftAnything-dev` User-Agent.
+   `git config core.hooksPath .githooks`. Generic `craft_anythingXFCC-dev` User-Agent.
 9. **Safe Rust only.** `unsafe_code = "forbid"` everywhere, no exceptions. Prefer pure-Rust crates; any dependency
    must be safe to use from safe code.
 10. **Never crash, never lock up, around other programs.** Every external program (Ghidra, Java, adb, a browser,

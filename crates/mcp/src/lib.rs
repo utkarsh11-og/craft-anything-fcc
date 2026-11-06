@@ -43,7 +43,7 @@ pub const CLAUDE_CODE_RESPONSE_BYTES: usize = 80 * 1024;
 /// Longest accepted request line.
 const MAX_REQUEST_BYTES: usize = 64 * 1024 * 1024;
 
-const INSTRUCTIONS: &str = "Craft Anything shows how software works, with evidence. Start with core_investigation_show and core_session_show. \
+const INSTRUCTIONS: &str = "craft_anythingXFCC shows how software works, with evidence. Start with core_investigation_show and core_session_show. \
 Open a target with core_target_open (absolute path), then use focused tools; ask for summaries first and page for detail. \
 Only the Essentials toolset is listed at first: call list_toolsets and enable_toolset to add native, Android, web and other tools. \
 Keep the investigation memory current (core_brief_write, core_plan_update, core_hypothesis_record, core_finding_record with evidence ids, core_handoff_write at the end of each turn). \
@@ -304,7 +304,7 @@ impl Server {
                 "completions": {},
                 "logging": {},
             },
-            "serverInfo": {"name": SERVER_NAME, "title": "Craft Anything", "version": env!("CARGO_PKG_VERSION")},
+            "serverInfo": {"name": SERVER_NAME, "title": "craft_anythingXFCC", "version": env!("CARGO_PKG_VERSION")},
             "instructions": INSTRUCTIONS,
         })
     }

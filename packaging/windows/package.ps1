@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Build, sign and package Craft Anything for Windows.
+  Build, sign and package craft_anythingXFCC for Windows.
 
 .DESCRIPTION
   Produces, in $env:DIST (default: dist/release):
@@ -60,7 +60,7 @@ if (-not $env:CRAFT_ANYTHING_BUILD_DATE) { $env:CRAFT_ANYTHING_BUILD_DATE = (Get
 $HasCli = Test-Path (Join-Path $Root 'apps\craft-anything-cli\Cargo.toml')
 $Bins = @('craft-anything'); if ($HasCli) { $Bins += 'craft-anything-cli' }
 
-Write-Output "Craft Anything $Version for Windows $Arch ($Target): $($Bins -join ', ')"
+Write-Output "craft_anythingXFCC $Version for Windows $Arch ($Target): $($Bins -join ', ')"
 
 if (-not $SkipBuild) {
   # Static CRT: no VC++ redistributable needed. Scoped to the target so host build scripts and
@@ -99,7 +99,7 @@ foreach ($exe in $Exes) { Copy-Item (Join-Path $Bin $exe) $Stage }
 & (Join-Path $PSScriptRoot 'sign.ps1') @($Exes | ForEach-Object { Join-Path $Stage $_ })
 
 # ---- MSI ---------------------------------------------------------------------------------------
-# The setup wizard's art, drawn here from the app icon so the MSI shows Craft Anything rather than
+# The setup wizard's art, drawn here from the app icon so the MSI shows craft_anythingXFCC rather than
 # WiX's stock bitmaps: a 493x58 banner across the top of the inner pages (the page title is drawn
 # over its left side, so that stays white) and a 493x312 backdrop for the Welcome and Finish pages
 # (their text sits on the right; the left 164 px are ours). Both must be 24-bit BMPs.

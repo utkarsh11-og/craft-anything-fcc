@@ -1,4 +1,4 @@
-# Flatpak manifest for Craft Anything, ready for a Flathub submission.
+# Flatpak manifest for the craft_anythingXFCC modified fork.
 #
 # Flatpak builds run offline, so the crate sources must be vendored first. From the repo root:
 #

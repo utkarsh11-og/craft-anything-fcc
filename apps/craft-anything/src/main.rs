@@ -1,4 +1,4 @@
-//! The Craft Anything desktop app.
+﻿//! The Craft Anything desktop app.
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
@@ -21,10 +21,10 @@ mod linux_gpu;
 fn main() -> eframe::Result {
     let args: Vec<String> = std::env::args().skip(1).collect();
     if args.iter().any(|a| a == "--version" || a == "-V") {
-        println!("craft-anything {}", env!("CARGO_PKG_VERSION"));
+        println!("craft_anythingXFCC {}", env!("CARGO_PKG_VERSION"));
         return Ok(());
     }
-    // A path on the command line (or from "Open with…") opens as the first target.
+    // A path on the command line (or from "Open withÃ¢â‚¬Â¦") opens as the first target.
     let open: Option<PathBuf> = args.iter().find(|a| !a.starts_with('-')).map(PathBuf::from);
     // The window app has no console: what goes wrong before (or instead of) a window is kept in
     // desktop.log beside the settings, so a start that shows nothing leaves a trace.
@@ -50,8 +50,8 @@ fn main() -> eframe::Result {
     log::info!("engine and AI ready; opening the window");
 
     let viewport = eframe::egui::ViewportBuilder::default()
-        .with_title("Craft Anything")
-        .with_app_id("ai.storyteller.craft-anything")
+        .with_title("craft_anythingXFCC")
+        .with_app_id("io.github.utkarsh11-og.craftanythingxfcc")
         .with_inner_size([1360.0, 860.0])
         .with_min_inner_size([760.0, 520.0])
         // Our own title bar draws the window controls, moves and resizes the window.
@@ -83,7 +83,7 @@ fn main() -> eframe::Result {
         setup.native_adapter_selector = Some(Arc::new(pick_adapter));
     }
     let run = eframe::run_native(
-        "Craft Anything",
+        "craft_anythingXFCC",
         options,
         Box::new(move |cc| {
             log::info!("window open");
@@ -107,7 +107,7 @@ fn main() -> eframe::Result {
             let log = craft_anything_engine::settings::config_dir().join("desktop.log");
             let _ = rfd::MessageDialog::new()
                 .set_level(rfd::MessageLevel::Error)
-                .set_title("Craft Anything couldn't open its window")
+                .set_title("craft_anythingXFCC couldn't open its window")
                 .set_description(format!(
                     "{e}\n\n{} What happened is written to {}; please attach it if you report this.",
                     graphics_advice(&e.to_string()),

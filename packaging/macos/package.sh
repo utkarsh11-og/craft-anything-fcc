@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build, sign and (optionally) notarize the macOS release artifacts:
 #
-#   $DIST/craft-anything-<version>-macos-<arch>.dmg          Craft Anything.app on a drag-to-Applications DMG
+#   $DIST/craft-anything-<version>-macos-<arch>.dmg          craft_anythingXFCC.app on a drag-to-Applications DMG
 #   $DIST/craft-anything-cli-<version>-macos-<arch>.zip      the headless CLI (when apps/craft-anything-cli exists)
 #
 # Usage: packaging/macos/package.sh [--arch universal|aarch64|x86_64] [--skip-build]
@@ -39,7 +39,7 @@ export MACOSX_DEPLOYMENT_TARGET=11.0
 IDENTITY="${MACOS_SIGN_IDENTITY:--}"
 SHORT_VERSION="${VERSION%%-*}"
 WORK="$CARGO_TARGET_DIR/macos-package"
-APP="$WORK/Craft Anything.app"
+APP="$WORK/craft_anythingXFCC.app"
 DMG="$DIST/craft-anything-$VERSION-macos-$ARCH.dmg"
 CLI_ZIP="$DIST/craft-anything-cli-$VERSION-macos-$ARCH.zip"
 
@@ -52,7 +52,7 @@ else
   warn "macOS: APPLE_ID / APPLE_PASSWORD / APPLE_TEAM_ID incomplete; signed but not notarized"
 fi
 
-echo "==> Craft Anything $VERSION for macOS ($ARCH; ${BINS[*]}), identity: $IDENTITY, notarize: $NOTARIZE"
+echo "==> craft_anythingXFCC $VERSION for macOS ($ARCH; ${BINS[*]}), identity: $IDENTITY, notarize: $NOTARIZE"
 
 # ---- build -------------------------------------------------------------------------------------
 if [ "$SKIP_BUILD" = 0 ]; then
@@ -101,7 +101,7 @@ notarize() {
 # The committed .icns (assets/app-icon/craft-anything.icns, rendered from the icon source).
 ICNS="$ROOT/assets/app-icon/craft-anything.icns"
 
-# ---- Craft Anything.app ----------------------------------------------------------------------
+# ---- craft_anythingXFCC.app ----------------------------------------------------------------------
 echo "==> assembling $APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 # The executable keeps the machine name (CFBundleExecutable); the bundle carries the display name.
@@ -123,7 +123,7 @@ printf 'APPL????' >"$APP/Contents/PkgInfo"
 # The nested code is the main executable and the CLI; frameworks/helpers would be signed here too.
 # The CLI keeps the identifier its zip has.
 if [ "$HAS_CLI" = 1 ]; then
-  sign --options runtime --identifier ai.storyteller.craft-anything-cli "$APP/Contents/MacOS/craft-anything-cli"
+  sign --options runtime --identifier io.github.utkarsh11-og.craftanythingxfcc-cli "$APP/Contents/MacOS/craft-anything-cli"
 fi
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP/Contents/MacOS/craft-anything"
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP"
@@ -141,7 +141,7 @@ fi
 echo "==> building $DMG"
 STAGE="$WORK/dmg"
 mkdir -p "$STAGE"
-ditto "$APP" "$STAGE/Craft Anything.app"
+ditto "$APP" "$STAGE/craft_anythingXFCC.app"
 ln -s /Applications "$STAGE/Applications"
 # Finder window layout: background, icon size and positions (packaging/macos/dmg/README.md).
 mkdir -p "$STAGE/.background"
@@ -167,7 +167,7 @@ hdiutil_retry() {
     sleep $((attempt * 10))
   done
 }
-hdiutil_retry create create -srcfolder "$STAGE" -volname "Craft Anything" -fs HFS+ -format UDZO -imagekey zlib-level=9 -ov "$DMG"
+hdiutil_retry create create -srcfolder "$STAGE" -volname "craft_anythingXFCC" -fs HFS+ -format UDZO -imagekey zlib-level=9 -ov "$DMG"
 sign "$DMG"
 codesign --verify --strict --verbose=2 "$DMG"
 # The app inside the image must still pass --strict, so a makehybrid-style regression can't ship.
@@ -175,11 +175,11 @@ MOUNT="$WORK/dmg-check"
 rm -rf "$MOUNT"
 mkdir -p "$MOUNT"
 hdiutil_retry attach attach -nobrowse -readonly -mountpoint "$MOUNT" "$DMG" >/dev/null
-if ! codesign --verify --strict --deep --verbose=2 "$MOUNT/Craft Anything.app"; then
+if ! codesign --verify --strict --deep --verbose=2 "$MOUNT/craft_anythingXFCC.app"; then
   hdiutil_retry detach detach "$MOUNT" >/dev/null || true
   exit 1
 fi
-if [ "$HAS_CLI" = 1 ] && ! "$MOUNT/Craft Anything.app/Contents/MacOS/craft-anything-cli" --version; then
+if [ "$HAS_CLI" = 1 ] && ! "$MOUNT/craft_anythingXFCC.app/Contents/MacOS/craft-anything-cli" --version; then
   echo "error: the app in the DMG has no working craft-anything-cli beside its executable" >&2
   hdiutil_retry detach detach "$MOUNT" >/dev/null || true
   exit 1
@@ -201,7 +201,7 @@ if [ "$HAS_CLI" = 1 ]; then
   copy_docs "$CLI_DIR"
   # Same Developer ID and hardened runtime as the app, with an explicit reverse-DNS identifier
   # (codesign would otherwise use the bare file name).
-  sign --options runtime --identifier ai.storyteller.craft-anything-cli "$CLI_DIR/craft-anything-cli"
+  sign --options runtime --identifier io.github.utkarsh11-og.craftanythingxfcc-cli "$CLI_DIR/craft-anything-cli"
   codesign --verify --strict --verbose=2 "$CLI_DIR/craft-anything-cli"
   rm -f "$CLI_ZIP"
   ditto -c -k --keepParent "$CLI_DIR" "$CLI_ZIP"
