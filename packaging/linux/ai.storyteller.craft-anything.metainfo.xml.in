@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- AppStream metadata (software centres, Flathub). Template: package.sh and the Flatpak
+     manifest substitute @VERSION@ and @DATE@ from Cargo.toml and the build date. -->
+<component type="desktop-application">
+  <!-- Retained for compatibility with the existing Flatpak ID and desktop file. -->
+  <id>ai.storyteller.craft-anything</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT OR Apache-2.0</project_license>
+  <name>craft_anythingXFCC</name>
+  <summary>Software analysis and AI-powered application building</summary>
+  <developer>
+    <name>craft_anythingXFCC Project</name>
+  </developer>
+  <description>
+    <p>
+      craft_anythingXFCC is a modified fork of Craft Anything. It helps explain how software
+      works using evidence-backed analysis of programs, apps, files and websites.
+    </p>
+    <ul>
+      <li>Reads executables, libraries, archives, Android packages, WebAssembly and web bundles</li>
+      <li>A built-in disassembler with functions, call graphs and pseudo-C</li>
+      <li>Answers include evidence, confidence and what is still unknown</li>
+      <li>Includes an AI-powered application-building workflow with configurable model backends</li>
+      <li>FCC Gateway integration can be configured separately; model availability depends on the gateway and upstream providers</li>
+    </ul>
+  </description>
+  <launchable type="desktop-id">ai.storyteller.craft-anything.desktop</launchable>
+  <icon type="stock">ai.storyteller.craft-anything</icon>
+  <!-- The upstream project URLs are intentionally omitted: this fork has not supplied its own
+       homepage, issue tracker, support channel or contact address. -->
+  <categories>
+    <category>Development</category>
+    <category>Debugger</category>
+  </categories>
+  <keywords>
+    <keyword>reverse engineering</keyword>
+    <keyword>disassembler</keyword>
+    <keyword>binary analysis</keyword>
+    <keyword>AI application builder</keyword>
+  </keywords>
+  <branding>
+    <color type="primary" scheme_preference="light">#efc39f</color>
+    <color type="primary" scheme_preference="dark">#8f4612</color>
+  </branding>
+  <requires>
+    <display_length compare="ge">760</display_length>
+  </requires>
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+  </supports>
+  <provides>
+    <binary>craft-anything</binary>
+  </provides>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="@VERSION@" date="@DATE@"/>
+  </releases>
+</component>

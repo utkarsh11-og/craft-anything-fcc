@@ -1,0 +1,11 @@
+XFCC app icon artwork
+
+The app icon artwork in this directory is the XFCC replacement artwork created for this
+project. It replaces the original Craft Anything raven icon and is not an ArtCraft asset.
+
+The artwork is project-specific. The repository's MIT OR Apache-2.0 licence applies to the
+surrounding project code and does not by itself establish a separate licence for this artwork.
+Do not treat the original Craft Anything raven icon or ArtCraft brand assets as part of this
+replacement artwork.
+
+`trace.py` is a tool covered by the repository's MIT OR Apache-2.0 licence.

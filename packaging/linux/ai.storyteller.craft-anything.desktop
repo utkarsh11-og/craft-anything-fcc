@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Name=craft_anythingXFCC
+GenericName=AI Application Builder
+Comment=Build applications with AI and multiple model providers
+Exec=craft-anything %F
+TryExec=craft-anything
+Icon=ai.storyteller.craft-anything
+Terminal=false
+StartupNotify=true
+StartupWMClass=io.github.utkarsh11-og.craftanythingxfcc
+Categories=Development;Debugger;
+Keywords=AI;application builder;coding;development;

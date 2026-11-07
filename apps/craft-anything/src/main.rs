@@ -1,0 +1,313 @@
+﻿//! The Craft Anything desktop app.
+#![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+use craft_anything_ai::AiHub;
+use craft_anything_engine::{Engine, Session, Settings};
+use craft_anything_ui_egui::CraftApp;
+use std::path::PathBuf;
+use std::sync::Arc;
+
+mod start_guard;
+
+/// Set when the last start never opened its window (see [`start_guard`]): the software renderer
+/// (WARP) is asked for, as with `CRAFT_ANYTHING_RENDERER=software`, for this start only.
+#[cfg(windows)]
+static RETRY_IN_SOFTWARE: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+#[cfg(any(target_os = "linux", test))]
+mod linux_gpu;
+
+fn main() -> eframe::Result {
+    let args: Vec<String> = std::env::args().skip(1).collect();
+    if args.iter().any(|a| a == "--version" || a == "-V") {
+        println!("craft_anythingXFCC {}", env!("CARGO_PKG_VERSION"));
+        return Ok(());
+    }
+    // A path on the command line (or from "Open withÃ¢â‚¬Â¦") opens as the first target.
+    let open: Option<PathBuf> = args.iter().find(|a| !a.starts_with('-')).map(PathBuf::from);
+    // The window app has no console: what goes wrong before (or instead of) a window is kept in
+    // desktop.log beside the settings, so a start that shows nothing leaves a trace.
+    log_to_file();
+    log::info!("starting {} (pid {})", env!("CARGO_PKG_VERSION"), std::process::id());
+    // A driver that crashes natively leaves nothing behind but this mark (#74): the start after it
+    // draws without the graphics card, and the one after that is back to normal.
+    let config = craft_anything_engine::settings::config_dir();
+    if start_guard::last_start_failed(&config) {
+        log::warn!("the last start never opened its window; drawing without the graphics card this time");
+        #[cfg(windows)]
+        RETRY_IN_SOFTWARE.store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+    start_guard::begin(&config);
+
+    let settings = Settings::load();
+    let mut session = Session::new(settings);
+    let plugins = craft_anything_engine::plugins::install(&mut session);
+    let mut layer_tools = craft_anything_ai::tools();
+    layer_tools.extend(craft_anything_setup::tools::specs());
+    let engine = Engine::shared_with(session, layer_tools, plugins);
+    let hub = Arc::new(AiHub::new(engine.clone()));
+    log::info!("engine and AI ready; opening the window");
+
+    let viewport = eframe::egui::ViewportBuilder::default()
+        .with_title("craft_anythingXFCC")
+        .with_app_id("io.github.utkarsh11-og.craftanythingxfcc")
+        .with_inner_size([1360.0, 860.0])
+        .with_min_inner_size([760.0, 520.0])
+        // Our own title bar draws the window controls, moves and resizes the window.
+        .with_decorations(false)
+        .with_resizable(true)
+        .with_drag_and_drop(true);
+    // On macOS a window icon replaces the Dock icon, and the bundle's own icon is the one padded to
+    // Apple's icon grid (the full tile looked bigger than other apps', #102). An empty icon keeps
+    // the bundle's; no icon at all would bring eframe's own.
+    let icon = if cfg!(target_os = "macos") { None } else { eframe::icon_data::from_png_bytes(craft_anything_ui_egui::APP_ICON_PNG).ok() };
+    let viewport = viewport.with_icon(Arc::new(icon.unwrap_or_default()));
+    #[cfg_attr(not(any(windows, target_os = "linux")), expect(unused_mut, reason = "only Windows and Linux pick their own graphics adapter"))]
+    let mut options = eframe::NativeOptions { viewport, ..Default::default() };
+    #[cfg(target_os = "linux")]
+    if let eframe::egui_wgpu::WgpuSetup::CreateNew(setup) = &mut options.wgpu_options.wgpu_setup {
+        // egui-wgpu's default is the discrete GPU; on a laptop whose integrated GPU drives the
+        // panel, the window took 20 s to open and the whole desktop lagged (#571). Draw on the
+        // GPU that drives the screen; `WGPU_ADAPTER_NAME` and `WGPU_POWER_PREF` still decide.
+        setup.native_adapter_selector = Some(Arc::new(linux_gpu::pick_adapter));
+    }
+    #[cfg(windows)]
+    if let eframe::egui_wgpu::WgpuSetup::CreateNew(setup) = &mut options.wgpu_options.wgpu_setup {
+        // Starting GL loads the system's OpenGL driver before any adapter is picked, and some
+        // Intel drivers crash in it (ig9icd64.dll, #196), so the window never opens. Similarly,
+        // starting Vulkan loads Intel's Vulkan driver (igvk64.dll, #394) and crashes before any
+        // window. DX12 (with WARP) covers all Windows systems; `WGPU_BACKEND` still asks for others.
+        setup.instance_descriptor.backends = windows_backends(eframe::wgpu::Backends::from_env());
+        setup.instance_descriptor.backend_options.dx12.shader_compiler = dx12_compiler(eframe::wgpu::Dx12Compiler::from_env());
+        setup.native_adapter_selector = Some(Arc::new(pick_adapter));
+    }
+    let run = eframe::run_native(
+        "craft_anythingXFCC",
+        options,
+        Box::new(move |cc| {
+            log::info!("window open");
+            CraftApp::setup_context(&cc.egui_ctx);
+            let mut app = CraftApp::new(engine, hub);
+            // The window is built hidden and its first frame is drawn afterwards, where a graphics
+            // driver may still crash: the mark stays until frames have been shown (#74).
+            app.after_first_frames(move || start_guard::opened(&config));
+            app.load_prefs(cc.storage);
+            if let Some(p) = open {
+                app.open_path(p);
+            }
+            Ok(Box::new(app))
+        }),
+    );
+    match &run {
+        Ok(()) => log::info!("closed"),
+        Err(e) => {
+            log::error!("the window couldn't start: {e}");
+            // Without a window the app would just vanish (#166): say why, and where the log is.
+            let log = craft_anything_engine::settings::config_dir().join("desktop.log");
+            let _ = rfd::MessageDialog::new()
+                .set_level(rfd::MessageLevel::Error)
+                .set_title("craft_anythingXFCC couldn't open its window")
+                .set_description(format!(
+                    "{e}\n\n{} What happened is written to {}; please attach it if you report this.",
+                    graphics_advice(&e.to_string()),
+                    log.display()
+                ))
+                .set_buttons(rfd::MessageButtons::Ok)
+                .show();
+        }
+    }
+    run
+}
+
+/// The DX12 shader compiler. wgpu's own choice (`Auto`) takes a `dxcompiler.dll` it finds on the
+/// PATH, and one without its `dxil.dll` makes unsigned shaders: on some drivers (an RTX 5060 Ti,
+/// #522) the device is lost the moment the window opens. FXC comes with Windows and needs no extra
+/// files; `WGPU_DX12_COMPILER` still asks for another.
+#[cfg_attr(all(not(windows), not(test)), expect(dead_code, reason = "only Windows draws with DX12"))]
+fn dx12_compiler(from_env: Option<eframe::wgpu::Dx12Compiler>) -> eframe::wgpu::Dx12Compiler {
+    from_env.unwrap_or(eframe::wgpu::Dx12Compiler::Fxc)
+}
+
+/// Whether the software renderer (WARP) is asked for: `CRAFT_ANYTHING_RENDERER=software`.
+#[cfg_attr(all(not(windows), not(test)), expect(dead_code, reason = "only Windows picks its own graphics adapter"))]
+fn wants_software(setting: Option<&str>) -> bool {
+    setting.is_some_and(|s| s.trim().eq_ignore_ascii_case("software"))
+}
+
+/// What to try when the window can't start. A lost graphics device on Windows gets the way to the
+/// software renderer; on macOS that setting does nothing (only Windows picks its adapter), so it
+/// gets the update advice and the report path. Anything else gets the usual driver advice.
+fn graphics_advice(error: &str) -> &'static str {
+    if error.to_lowercase().contains("device is lost") {
+        if cfg!(target_os = "macos") {
+            "The Mac's graphics stopped while the window opened. Install the latest macOS update, then try again. If it keeps happening, please report it with the log file (Craft Anything issue #742 covers the Metal shader case)."
+        } else {
+            "The graphics driver stopped while the window opened. Update it, then try again. If it keeps happening, set the environment variable CRAFT_ANYTHING_RENDERER=software to draw without the graphics card (slower), and start the app again."
+        }
+    } else {
+        "Updating your graphics driver often fixes this."
+    }
+}
+
+/// Windows: the adapter that draws the window. GL is the last resort, Windows' own software
+/// renderer (WARP) included: in a VMware VM, GL is the way to the virtual GPU and drew a black
+/// window (#27). The fastest device wins, and between same-class devices DX12 comes before Vulkan
+/// (#33). `WGPU_BACKEND` still narrows the choice.
+#[cfg(windows)]
+fn pick_adapter(adapters: &[eframe::wgpu::Adapter], surface: Option<&eframe::wgpu::Surface<'_>>) -> Result<eframe::wgpu::Adapter, String> {
+    let software = wants_software(std::env::var("CRAFT_ANYTHING_RENDERER").ok().as_deref()) || RETRY_IN_SOFTWARE.load(std::sync::atomic::Ordering::Relaxed);
+    let picked = adapters.iter().filter(|a| surface.is_none_or(|s| a.is_surface_supported(s))).min_by_key(|a| {
+        let info = a.get_info();
+        // Asked for software: WARP first, and the usual order among the rest.
+        (software && info.device_type != eframe::wgpu::DeviceType::Cpu, adapter_rank(info.backend, info.device_type))
+    });
+    match picked {
+        Some(a) => {
+            log::info!("drawing with {:?}", a.get_info());
+            Ok(a.clone())
+        }
+        None => Err(format!("None of the {} graphics adapters found can draw this window.", adapters.len())),
+    }
+}
+
+/// Windows: the graphics backends to start. `WGPU_BACKEND` decides when set; otherwise DX12
+/// only (#196, #394). Vulkan and GL load third-party driver DLLs (igvk64.dll, ig9icd64.dll) before
+/// an adapter is chosen, which crash on some Intel systems. DX12 (with WARP) covers all Windows
+/// installations; `WGPU_BACKEND=vulkan` or `gl` still asks for them explicitly.
+#[cfg(windows)]
+fn windows_backends(from_env: Option<eframe::wgpu::Backends>) -> eframe::wgpu::Backends {
+    from_env.unwrap_or(eframe::wgpu::Backends::DX12)
+}
+
+/// Lower is better: GL last, fastest device first, DX12 before Vulkan only between same-class devices
+/// (#33).
+#[cfg(windows)]
+fn adapter_rank(backend: eframe::wgpu::Backend, device: eframe::wgpu::DeviceType) -> (bool, u8, u8) {
+    use eframe::wgpu::DeviceType;
+    let is_gl = backend == eframe::wgpu::Backend::Gl;
+    let speed = match device {
+        DeviceType::DiscreteGpu => 0,
+        DeviceType::IntegratedGpu => 1,
+        DeviceType::VirtualGpu => 2,
+        DeviceType::Cpu => 3,
+        DeviceType::Other => 4,
+    };
+    let dx12_before_vulkan = match backend {
+        eframe::wgpu::Backend::Dx12 => 0,
+        eframe::wgpu::Backend::Vulkan => 1,
+        _ => 2,
+    };
+    (is_gl, speed, dx12_before_vulkan)
+}
+
+#[cfg(all(test, windows))]
+mod tests {
+    use super::*;
+    use eframe::wgpu::{Backend as B, DeviceType as T};
+
+    /// #27: a VMware VM offers its virtual GPU over GL and WARP over DX12; GL drew a black window.
+    /// #33: a start that shows nothing is looked at through `desktop.log`; between same-class
+    /// devices DX12 comes before Vulkan, and GL stays the last resort.
+    #[test]
+    fn dx12_comes_before_vulkan_and_gl_is_the_last_resort() {
+        let best = |c: &[(B, T)]| c.iter().enumerate().min_by_key(|(_, (b, t))| adapter_rank(*b, *t)).map(|(i, _)| i);
+        assert_eq!(best(&[(B::Gl, T::Other), (B::Dx12, T::Cpu)]), Some(1), "VMware: WARP, not GL");
+        assert_eq!(best(&[(B::Gl, T::IntegratedGpu), (B::Dx12, T::Cpu)]), Some(1));
+        assert_eq!(best(&[(B::Vulkan, T::DiscreteGpu), (B::Dx12, T::IntegratedGpu)]), Some(0), "fastest GPU first");
+        assert_eq!(best(&[(B::Dx12, T::IntegratedGpu), (B::Vulkan, T::IntegratedGpu)]), Some(0), "DX12 before Vulkan between same-class devices");
+        assert_eq!(best(&[(B::Dx12, T::Cpu), (B::Vulkan, T::DiscreteGpu)]), Some(1), "WARP does not beat a real Vulkan device");
+        assert_eq!(best(&[(B::Dx12, T::IntegratedGpu), (B::Vulkan, T::DiscreteGpu), (B::Dx12, T::Cpu)]), Some(1), "fastest GPU first");
+        assert_eq!(best(&[(B::Gl, T::Other)]), Some(0), "GL when it's all there is");
+    }
+
+    /// #196: an Intel OpenGL driver crashed the app as wgpu started GL, before any window.
+    /// #394: an Intel Vulkan driver (igvk64.dll) crashed the app as wgpu started Vulkan.
+    #[test]
+    fn gl_and_vulkan_are_only_started_when_asked_for() {
+        use eframe::wgpu::Backends;
+        let started = windows_backends(None);
+        assert_eq!(started, Backends::DX12);
+        assert_eq!(windows_backends(Some(Backends::GL)), Backends::GL, "WGPU_BACKEND=gl still works");
+        assert_eq!(windows_backends(Some(Backends::VULKAN)), Backends::VULKAN, "WGPU_BACKEND=vulkan still works");
+    }
+}
+
+/// Kept small: started afresh once it passes this size.
+const LOG_MAX: u64 = 512 * 1024;
+
+/// Warnings and errors from everything, plus our own progress, appended to `desktop.log`; and
+/// panics, which would otherwise vanish with the window.
+fn log_to_file() {
+    use std::io::Write as _;
+    struct FileLog(craft_anything_platform::sync::Mutex<Option<std::fs::File>>);
+    impl log::Log for FileLog {
+        fn enabled(&self, m: &log::Metadata<'_>) -> bool {
+            m.level() <= log::Level::Warn || (m.level() <= log::Level::Info && m.target().starts_with("craft_anything"))
+        }
+        fn log(&self, r: &log::Record<'_>) {
+            if !self.enabled(r.metadata()) {
+                return;
+            }
+            let at = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0);
+            if let Ok(mut f) = self.0.lock()
+                && let Some(f) = f.as_mut()
+            {
+                let _ = writeln!(f, "{at} [{}] {}: {}", r.level(), r.target(), r.args());
+            }
+        }
+        fn flush(&self) {}
+    }
+    let dir = craft_anything_engine::settings::config_dir();
+    let path = dir.join("desktop.log");
+    let _ = std::fs::create_dir_all(&dir);
+    let fresh = std::fs::metadata(&path).is_ok_and(|m| m.len() > LOG_MAX);
+    let file = std::fs::OpenOptions::new().create(true).append(!fresh).write(true).truncate(fresh).open(&path).ok();
+    if log::set_logger(Box::leak(Box::new(FileLog(craft_anything_platform::sync::Mutex::new(file))))).is_ok() {
+        log::set_max_level(log::LevelFilter::Info);
+    }
+    let default_hook = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        log::error!("panic: {info}");
+        default_hook(info);
+    }));
+    craft_anything_platform::sync::start_watchdog(craft_anything_engine::settings::config_dir().join("logs"));
+}
+
+#[cfg(test)]
+mod graphics_tests {
+    use super::*;
+    use eframe::wgpu::Dx12Compiler;
+
+    /// #522: wgpu's `Auto` found a `dxcompiler.dll` without `dxil.dll`, and the device was lost on
+    /// an RTX 5060 Ti. FXC is the default; the environment variable still decides when set.
+    #[test]
+    fn dx12_draws_with_the_compiler_windows_ships_unless_asked_otherwise() {
+        assert!(matches!(dx12_compiler(None), Dx12Compiler::Fxc));
+        assert!(matches!(dx12_compiler(Some(Dx12Compiler::StaticDxc)), Dx12Compiler::StaticDxc));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn a_lost_device_says_how_to_draw_without_the_graphics_card() {
+        assert!(graphics_advice("WGPU error: Parent device is lost").contains("CRAFT_ANYTHING_RENDERER=software"));
+        assert!(!graphics_advice("No adapter").contains("software"));
+        assert!(wants_software(Some(" Software ")) && !wants_software(Some("gpu")) && !wants_software(None));
+    }
+
+    /// #742: on macOS `CRAFT_ANYTHING_RENDERER` does nothing, so the advice must not name it.
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn a_lost_device_on_a_mac_does_not_point_at_the_windows_only_setting() {
+        let advice = graphics_advice("WGPU error: Parent device is lost");
+        assert!(!advice.contains("CRAFT_ANYTHING_RENDERER"), "{advice}");
+        assert!(advice.contains("#742"));
+        assert!(!graphics_advice("No adapter").contains("CRAFT_ANYTHING_RENDERER"));
+    }
+
+    #[cfg(not(windows))]
+    #[test]
+    fn wants_software_reads_the_setting() {
+        assert!(wants_software(Some(" Software ")) && !wants_software(Some("gpu")) && !wants_software(None));
+    }
+}
