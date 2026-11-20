@@ -1417,3 +1417,14 @@ Providers	提供商
 Harnesses	代理
 Nothing of this kind was found.	没有找到这类项目。
 Another model	其他模型
+Add an FCC Gateway	Add an FCC Gateway
+Building needs a coding agent on this computer (Claude Code, Codex or Gemini CLI: install one and sign in to it once in its own window), or an AI with an API key. craft_anythingXFCC never sees your account.	Building needs a coding agent on this computer (Claude Code, Codex or Gemini CLI: install one and sign in to it once in its own window), or an AI with an API key. craft_anythingXFCC never sees your account.
+Clean room never reads the original's code, files or page source. Deep mode reads them with every tool craft_anythingXFCC has.	Clean room never reads the original's code, files or page source. Deep mode reads them with every tool craft_anythingXFCC has.
+Connect to a FreeClaudeCode gateway using its Anthropic-compatible API.	Connect to a FreeClaudeCode gateway using its Anthropic-compatible API.
+How closely may craft_anythingXFCC look at it?	How closely may craft_anythingXFCC look at it?
+It isn't on this computer yet. craft_anythingXFCC can download Ghidra {version} and the Java runtime it needs (about {mb} MB), check both against their publishers' checksums, and set them up in its own folder. Nothing else on your computer changes.	It isn't on this computer yet. craft_anythingXFCC can download Ghidra {version} and the Java runtime it needs (about {mb} MB), check both against their publishers' checksums, and set them up in its own folder. Nothing else on your computer changes.
+Plugins add tools craft_anythingXFCC offers as its own: MCP servers (a command or an address; read their tools after adding) or WebAssembly components (a .wasm file, which can't touch your files or the network).	Plugins add tools craft_anythingXFCC offers as its own: MCP servers (a command or an address; read their tools after adding) or WebAssembly components (a .wasm file, which can't touch your files or the network).
+Without it, Deep mode uses craft_anythingXFCC's own decompiler, which is rougher.	Without it, Deep mode uses craft_anythingXFCC's own decompiler, which is rougher.
+craft_anythingXFCC	craft_anythingXFCC
+craft_anythingXFCC can't build with {engine}, so Unity is the closest match.	craft_anythingXFCC can't build with {engine}, so Unity is the closest match.
+craft_anythingXFCC's records, checks and anything it built in app/ are deleted. Your own files in the folder stay as they are.	craft_anythingXFCC's records, checks and anything it built in app/ are deleted. Your own files in the folder stay as they are.
